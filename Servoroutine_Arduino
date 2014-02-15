@@ -1,0 +1,63 @@
+#include <Servo.h> 
+
+
+// button
+// when pressed  -- move from 50 to 175 and back to 50 in 5 seconds
+
+
+Servo 			doorServo;  
+unsigned long 	startTime;
+const int 		knockSensor 			= A0; 
+const int 		threshold 				= 100; 
+bool 			bOverThresoldLastFrame 	= false;
+bool 			bInServoRoutine 		= false;
+int 			sensorReading 			= 0;      // variable to store the value read from the sensor pin
+
+
+
+void setup() {
+  
+  // setup servo: 
+  doorServo.attach(9); 
+  startTime = 0;    // don't start at start. 
+  bInServoRoutine = false;
+ 
+  pinMode(led, OUTPUT);     
+}
+
+// does the servo animation based on starttime
+void doServo(){
+   unsigned long elapsedTime = millis() - startTime;
+  if (elapsedTime < 2500 && elapsedTime >= 0){
+    int posA = map(elapsedTime, 0, 2500, 170, 85);
+    doorServo.write(posA);
+  } else if (elapsedTime >= 2500 && elapsedTime <= 5000){
+    int posA = map(elapsedTime, 2500, 5000, 85, 170);
+    doorServo.write(posA);
+  } else if (elapsedTime > 5000){
+  	bInServoRoutine = false;
+  }
+}
+
+void loop() {
+  
+
+  // (a) check if we are over threshold: 
+  bool bOverThresold = false;
+  sensorReading = analogRead(knockSensor); 
+  if (sensorReading > threshold ){
+  	 bOverThresold = true;
+  	 if (bOverThresoldLastFrame == false  && bInServoRoutine != true ){
+  	 	startTime = millis();
+ 	 	bInServoRoutine = true;
+ 	 }
+  }
+  
+  bOverThresoldLastFrame = bOverThresold;
+  
+  if (bInServoRoutine){
+  	doServo();
+  }
+  
+  delay(10);
+}
